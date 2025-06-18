@@ -9,16 +9,35 @@ import PriceView from "./PriceView";
 import Title from "./Title";
 import ProductSideMenu from "./ProductSideMenu";
 import AddToCartButton from "./AddToCartButton";
+import { SanityImageSource } from "@sanity/image-url/lib/types/types";
+import { ProductWithMockImages, ProductImageWithMockUrl } from "./ProductGrid";
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = ({ product }: { product: ProductWithMockImages }) => {
+  const firstImage = product?.images?.[0];
+  
+  let imageUrl: string | undefined;
+
+  if (firstImage?.mockUrl) {
+    imageUrl = firstImage.mockUrl;
+  } else if (firstImage?.asset) {
+    try {
+      imageUrl = urlFor(firstImage as SanityImageSource).url();
+    } catch (error) {
+      console.error("Error generating Sanity image URL for product:", product?._id, error);
+      imageUrl = "https://via.placeholder.com/300x300.png?text=Img+Error";
+    }
+  } else {
+    imageUrl = "https://via.placeholder.com/300x300.png?text=No+Image";
+  }
+
   return (
     <div className="text-sm border-[1px] rounded-md border-darkBlue/20 group bg-white">
       <div className="relative group overflow-hidden bg-shop_light_bg">
-        {product?.images && (
-          <Link href={`/product/${product?.slug?.current}`}>
+        {imageUrl && (
+          <Link href={`/product/${product?.slug?.current || '#'}`}>
             <Image
-              src={urlFor(product.images[0]).url()}
-              alt="productImage"
+              src={imageUrl}
+              alt={product?.name || "Product image"}
               width={500}
               height={500}
               priority
